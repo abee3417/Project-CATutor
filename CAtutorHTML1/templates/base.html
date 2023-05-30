@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap.min.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+    <script src="https://kit.fontawesome.com/f28dbb8460.js" crossorigin="anonymous"></script>
+    <title>CA Tutor</title>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a id="logo" class="navbar-brand" href={% url 'temp:index' %}>CATutor</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mx-5 mb-2 mb-lg-0 navs">
+                    <li class="nav-item mx-1"><a class="nav-link active text-white " aria-current="page" href="#">Home</a></li>
+                    <li class="nav-item mx-1"><a class="nav-link active text-white" href="#">Code</a></li>
+                    <li class="nav-item mx-1"><a class="nav-link active text-white" href="#">Login</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</head>
+<body>
+    <main class="container">
+    <!-- 상속받는 HTML파일의 Body가 들어가는 부분 -->
+    {% block content %}
+    {% endblock %}
+    <!-- 상속받는 HTML파일의 Script가 들어가는 부분 -->
+    </main>
+    <script src="{% static 'bootstrap.min.js' %}"></script>
+    {% block script %}
+    {% endblock %}
+</body>
+</html>
