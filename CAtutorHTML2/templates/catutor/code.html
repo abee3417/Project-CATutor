@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container my-3">
+    <p id="title" class="text-center">Code Page</p>
+    <div>
+    <button onclick="setColorMode()" id="color-mode-btn" class="btn btn-dark float-start">Dark Mode</button>
+    <button onclick="clearEditor()" id="clear-btn" class="btn btn-primary float-end">Clear</button>
+    <br>
+    </div>
+    
+    <form action="{% url 'ca_tutor:result' %}" method="post" class="my-3">
+        {% csrf_token %}
+        <textarea id="codearea" class="codearea"></textarea>
+        <div class="text-center mt-5">
+            <input type="submit" id="coderesult" name="coderesult" value="Visualize Execution" class="btn btn-secondary" style="width:200px;height:50px;font-size:19px;">
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block script %}
+<script src="{% static 'codestyle.js' %}"></script>
+{% endblock %}
+{% block css %}
+<link rel="stylesheet" type="text/css" href="{% static 'codestyle.css' %}?ver{% now 'U' %}">
+<link rel="stylesheet" type="text/css" href="{% static '3024-night.css' %}?ver{% now 'U' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'neat.css' %}?ver{% now 'U' %}">
+{% endblock %}
