@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container my-4">
+    <img class="rounde mx-auto d-block" width="30%" height="30%" src="{% static 'images/mips_jeans.png' %}"/>
+</div>
+<div class="container my-3">
+    <p id="title" class="text-center">Visualize C code with CA tutor</p>
+</div>
+<div class="container my-3">
+    <p class="text-center content">Detailed, fast, and simple Mips ISA Simulator. <br>
+        Write your code, get deep understanding <br>
+        of registers and memory change step-by-step.
+    </p>
+</div>
+<br>
+<div class="d-flex justify-content-center">
+    <a href="https://github.com/judemario-kim/ca-tutor" target="_blank"><button type="button" style="width:200px;height:50px" class="btn btn-secondary btn-lg mx-5"><i class="fa-brands fa-github icon-github"></i>&nbsp;&nbsp;Our Github</button></a>
+    <a href="{% url 'ca_tutor:code' %}"><button type="button" style="width:200px;height:50px" class="btn btn-dark btn-lg mx-5">Get Started</button></a>
+</div>
+{% endblock %}

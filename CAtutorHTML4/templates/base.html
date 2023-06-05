@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}?ver{% now 'U' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap/bootstrap.min.css' %}?ver{% now 'U' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'codemirror/codemirror.css' %}?ver{% now 'U' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+    <script src="https://kit.fontawesome.com/f28dbb8460.js" crossorigin="anonymous"></script>
+    <title>CA Tutor</title>
+</head>
+<body>
+    {% if request.path == "/catutor/code/" %}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a id="logo" class="navbar-brand" onclick="checkGoIndex()" href="#">CATutor</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mx-5 mb-2 mb-lg-0 navs">
+                    <li class="nav-item mx-1"><a class="nav-link active text-white" onclick="checkGoIndex()" href="#">Home</a></li>
+                    <li class="nav-item mx-1"><a class="nav-link active text-white" onclick="checkGoCode()" href="#">Code</a></li>
+                    <li class="nav-item mx-1"><a class="nav-link active text-white" onclick="checkGoLogin()" href="#">Login</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% else %}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a id="logo" class="navbar-brand" href="{% url 'ca_tutor:index' %}">CATutor</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mx-5 mb-2 mb-lg-0 navs">
+                    <li class="nav-item mx-1"><a class="nav-link active text-white" href="{% url 'ca_tutor:index' %}">Home</a></li>
+                    <li class="nav-item mx-1"><a class="nav-link active text-white" href="{% url 'ca_tutor:code' %}">Code</a></li>
+                    <li class="nav-item mx-1"><a class="nav-link active text-white" href="{% url 'ca_tutor:result' %}">Login</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+    <main class="container">
+    <!-- 상속받는 HTML파일의 Body가 들어가는 부분 -->
+    {% block content %}
+    {% endblock %}
+    <!-- 상속받는 HTML파일의 Script가 들어가는 부분 -->
+    </main>
+    <!--bootstrap-->
+    <script src="{% static 'bootstrap/bootstrap.min.js' %}"></script>
+    <!--codemirror-->
+    <script src="{% static 'codemirror/codemirror.js' %}"></script>
+    <script src="{% static 'codemirror/clike.js' %}"></script>
+    {% block script %}
+    <script type='text/javascript'>
+        element.addEventListener('click', function() {
+            if(confirm("삭제하시겠습니까?")) {
+                location.href = this.dataset.uri;
+                // 확인 누르면 data-uri에 적용된 링크가 실행
+            };
+        });
+    </script>
+    {% endblock %}
+    {% block css %}
+    {% endblock %}
+</body>
+</html>
