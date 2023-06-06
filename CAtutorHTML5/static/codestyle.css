@@ -1,0 +1,7 @@
+.codearea { /*적용 x codemirror.css에서 CodeMirror 내부 값 수정해야 바뀐다*/
+    width: 500px; /* 너비 설정 */
+    height: 400px; /* 높이 설정 */
+    resize: none; /* 사용자가 크기를 조절할 수 없도록 설정 */
+    overflow-x: scroll; /* 가로 스크롤 추가 */
+    overflow-y: scroll; /* 세로 스크롤 추가 */
+}
