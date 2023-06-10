@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit&family=Lato:wght@900&family=Roboto:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Varela+Round&display=swap');
+
+/*
+font-family: 'Kanit', sans-serif; 추가용
+font-family: 'Lato', sans-serif;  제목
+font-family: 'Roboto', sans-serif !important; 본문
+*/
+
+
+#title{
+    font-family: 'Lato', sans-serif;
+    font-weight: 900;
+    font-size : 60px;
+}
+
+#logo{
+    font-family: 'Lato', sans-serif;
+    font-size: 30px;
+}
+
+.content{
+    font-family: 'Roboto', sans-serif;
+    font-size: 30px;
+}
+
+.index-btn{
+    font-family: 'Kanit', sans-serif;
+    font-size : 30px; 
+    width: 180px;
+    height: 50px;
+    scale: 1.2;
+}
+
+.navs{
+    font-family: 'Kanit', sans-serif;
+    font-size: 21px;
+}
+
+.sub-title{
+    font-family: 'Varela Round', sans-serif;
+    font-weight: 900;
+    font-size: 30px;
+}
+
+.code-block{
+    height:380px;
+    width:100%;
+    border-radius:2%;
+}
+
+.result-block{
+    height:345px;
+    width:100%;
+    border-radius:2%;
+}
+
+.big-block{
+    height:843px;
+    width:100%;
+    border-radius:2%;
+}
