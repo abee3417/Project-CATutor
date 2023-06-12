@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/xterm@3.6.0/dist/xterm.css" />
+
+    <script src="https://unpkg.com/xterm@3.6.0/dist/xterm.js"></script>
+    <script src="https://unpkg.com/xterm@3.6.0/dist/addons/fit/fit.js"></script>
+    <script src="https://unpkg.com/xterm@3.6.0/dist/addons/fullscreen/fullscreen.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.4.0/socket.io.js"></script>
+</head>
+
+<div class="row-vw justify-content-center mt-3 ms-vw0 me-vw0 gx-5">
+    <div class="col-vw" style="flex-direction:column;">
+        <div class="d-flex align-items-center">
+            <div class="sub-title">Code</div><button class="btn btn-context btn-secondary px-3 ms-auto" onclick="load_register()">Start</button>  
+        </div>
+        <div class="d-flex align-items-center code-block border border-3 border-dark mt-2">
+            <!-- 코드 불러오기 -->
+            <div id="code" style="overflow:scroll; width: 100%; height: 97%" class="form-control text-center border border-white bg-white py-0" contenteditable="false">press start button</div>
+            </div>
+        <div class="d-flex justify-content-center">
+            <!-- 버튼 및 페이징 미구현 상태, 버튼 그리드 안망가지게 추후 변경할 것 -->
+            <div class="mt-3 align-items-center">
+                <button class="btn btn-dark btn-context me-1" onclick="reg_first()" style="width=20%">&lt;&lt;</button>
+                <button class="btn btn-dark btn-context mx-2" onclick="reg_prev()" style="width=20%">&lt;</button>
+                <span class="btn-context px-1 mx-0" id="code_index" style="width=20%">0/0</span> 
+                <button class="btn btn-dark btn-context mx-2" onclick="reg_next()" style="width=20%">&gt;</button>
+                <button class="btn btn-dark btn-context ms-1" onclick="reg_last()" style="width=20%">&gt;&gt;</button>
+            </div>
+        </div>
+        <div class="mt-2">
+            <div class="sub-title">Result</div>
+        </div>
+        <div class="result-block border border-3 border-dark mt-2">
+            <!-- xterm 불러오기 -->
+            <div style=" width: 100%; height:105%;" id="terminal"></div>
+            <script type='text/javascript'>
+
+                Terminal.applyAddon(fit)
+
+                var socket = io.connect('https://xtermjs.run.goorm.site', {transports: ["polling"], extraHeaders: {"test": document.cookie.match('test=([^;]*)')[1]}}); //{transports: ["websocket", "polling"]}');
+
+                var term = new Terminal({
+                    cursorBlink: true,
+                });
+
+                term.open(document.getElementById('terminal'));
+
+                
+                socket.on("pty_output", function(output){
+                    var sid = document.cookie.match('io=([^;]*)')[1];
+                    if (sid == output["sid"]){
+                        term.write(output["output"])
+                    }
+                })
+                
+                var dispose = 0;
+                
+                term.on('key', (key, ev) => {
+                    if (dispose == 1){
+                        term.clear()
+                    }
+                    else{
+                        socket.emit("pty_input", {"input": key})
+                    }
+                });
+                
+                socket.on("dispose", function(){
+                    dispose = 1;
+                })
+                
+                var reg_dict = {};
+                
+                
+                function load_register(){
+                    socket.emit("load_register")
+                    socket.emit("load_code")
+                }
+                
+                socket.on("send_register", function(output){
+                    var sid = document.cookie.match('io=([^;]*)')[1];
+                    if (sid == output["sid"]){
+                        reg_dict = output;
+                        set_reg();
+                        set_index();
+                    }
+                })
+                
+                socket.on("send_code", function(output){
+                    var sid = document.cookie.match('io=([^;]*)')[1];
+                    if (sid == output["sid"]){
+                        code_area = document.getElementById("code");
+                        code_area.replaceChildren();
+                        for (var i = 0; i<output["code"].length; i++){
+                            code_area.setAttribute("class", "form-control border border-white bg-white py-0")
+                            new_line = document.createElement("div");
+                            new_line.innerText = output["code"][i];
+                            n = ((i-1)*4).toString(16);
+                            new_line.setAttribute("id", "pc_0x"+n);
+                            code_area.appendChild(new_line);
+                        }
+                    }
+                })
+
+                var cycle = 0;
+                var prev_cycle = -1;
+                
+                function reg_first(){
+                    prev_cycle = cycle;
+                    cycle = 0;
+                    set_code_color();
+                    set_reg();
+                    delete_mem();
+                    set_index();
+                }
+                
+                function reg_prev(){
+                    if (cycle > 0){
+                        prev_cycle = cycle;
+                        cycle--;
+                    }
+                    set_code_color();
+                    set_reg();
+                    undo_mem();
+                    set_index();
+                }
+                
+                function reg_next(){
+                    if (cycle < (reg_dict['total'].length)-1){
+                        prev_cycle = cycle;
+                        cycle++;
+                    }
+                    set_code_color();
+                    set_reg();
+                    set_mem();
+                    set_index();
+                }
+                
+                function reg_last(){
+                    prev_cycle = cycle;
+                    cycle = reg_dict['total'].length-1;
+                    set_code_color();
+                    set_reg();
+                    set_all_mem();
+                    set_index();
+                }
+                
+                function set_code_color(){
+                    current_line = document.getElementById("pc_"+reg_dict["total"][cycle]["pc"]);
+                    if (prev_cycle != -1){
+                        prev_line = document.getElementById("pc_"+reg_dict["total"][prev_cycle]["pc"]);
+                        prev_line.setAttribute("style", "color: black");
+                    }
+                    current_line.setAttribute("style", "color: red");
+                    current_line.scrollIntoView({block: "nearest", inline: "nearest", behavior: "smooth"});
+                    code_area = document.getElementById("code");
+                }
+                
+                function set_reg(){
+                    var PC = document.getElementById("PC");
+                    PC.innerText=reg_dict['total'][cycle]['pc']; 
+                    var PC = document.getElementById("IR");
+                    PC.innerText=reg_dict['total'][cycle]['ir']; 
+                    var PC = document.getElementById("r0");
+                    PC.innerText=reg_dict['total'][cycle]['reg[0]']; 
+                    var PC = document.getElementById("at");
+                    PC.innerText=reg_dict['total'][cycle]['reg[1]']; 
+                    var PC = document.getElementById("v0");
+                    PC.innerText=reg_dict['total'][cycle]['reg[2]']; 
+                    var PC = document.getElementById("v1");
+                    PC.innerText=reg_dict['total'][cycle]['reg[3]']; 
+                    var PC = document.getElementById("a0");
+                    PC.innerText=reg_dict['total'][cycle]['reg[4]']; 
+                    var PC = document.getElementById("a1");
+                    PC.innerText=reg_dict['total'][cycle]['reg[5]']; 
+                    var PC = document.getElementById("a2");
+                    PC.innerText=reg_dict['total'][cycle]['reg[6]']; 
+                    var PC = document.getElementById("a3");
+                    PC.innerText=reg_dict['total'][cycle]['reg[7]'];
+                    var PC = document.getElementById("t0");
+                    PC.innerText=reg_dict['total'][cycle]['reg[8]']; 
+                    var PC = document.getElementById("t1");
+                    PC.innerText=reg_dict['total'][cycle]['reg[9]']; 
+                    var PC = document.getElementById("t2");
+                    PC.innerText=reg_dict['total'][cycle]['reg[10]']; 
+                    var PC = document.getElementById("t3");
+                    PC.innerText=reg_dict['total'][cycle]['reg[11]']; 
+                    var PC = document.getElementById("t4");
+                    PC.innerText=reg_dict['total'][cycle]['reg[12]']; 
+                    var PC = document.getElementById("t5");
+                    PC.innerText=reg_dict['total'][cycle]['reg[13]']; 
+                    var PC = document.getElementById("t6");
+                    PC.innerText=reg_dict['total'][cycle]['reg[14]']; 
+                    var PC = document.getElementById("t7");
+                    PC.innerText=reg_dict['total'][cycle]['reg[15]']; 
+                    var PC = document.getElementById("s0");
+                    PC.innerText=reg_dict['total'][cycle]['reg[16]']; 
+                    var PC = document.getElementById("s1");
+                    PC.innerText=reg_dict['total'][cycle]['reg[17]']; 
+                    var PC = document.getElementById("s2");
+                    PC.innerText=reg_dict['total'][cycle]['reg[18]']; 
+                    var PC = document.getElementById("s3");
+                    PC.innerText=reg_dict['total'][cycle]['reg[19]']; 
+                    var PC = document.getElementById("s4");
+                    PC.innerText=reg_dict['total'][cycle]['reg[20]']; 
+                    var PC = document.getElementById("s5");
+                    PC.innerText=reg_dict['total'][cycle]['reg[21]']; 
+                    var PC = document.getElementById("s6");
+                    PC.innerText=reg_dict['total'][cycle]['reg[22]']; 
+                    var PC = document.getElementById("s7");
+                    PC.innerText=reg_dict['total'][cycle]['reg[23]']; 
+                    var PC = document.getElementById("t8");
+                    PC.innerText=reg_dict['total'][cycle]['reg[24]']; 
+                    var PC = document.getElementById("t9");
+                    PC.innerText=reg_dict['total'][cycle]['reg[25]']; 
+                    var PC = document.getElementById("k0");
+                    PC.innerText=reg_dict['total'][cycle]['reg[26]']; 
+                    var PC = document.getElementById("k1");
+                    PC.innerText=reg_dict['total'][cycle]['reg[27]']; 
+                    var PC = document.getElementById("gp");
+                    PC.innerText=reg_dict['total'][cycle]['reg[28]']; 
+                    var PC = document.getElementById("sp");
+                    PC.innerText=reg_dict['total'][cycle]['reg[29]']; 
+                    var PC = document.getElementById("fp");
+                    PC.innerText=reg_dict['total'][cycle]['reg[30]']; 
+                    var PC = document.getElementById("ra");
+                    PC.innerText=reg_dict['total'][cycle]['reg[31]']; 
+                    var PC = document.getElementById("HI");
+                    PC.innerText=0; 
+                    var PC = document.getElementById("LO");
+                    PC.innerText=0; 
+                }
+                
+                function set_index(){
+                    var index = document.getElementById("code_index");
+                    index.innerText=String(cycle)+'/'+String(reg_dict['total'].length-1);
+                }
+                
+                function delete_mem(){
+                    mem_area = document.getElementById("mem_area");
+                    mem_area.replaceChildren();
+                }
+                
+                
+                function set_mem(){
+                    
+                    
+                    mem_address = reg_dict['total'][cycle]['mem_address'];
+                    mem_hex_value = reg_dict['total'][cycle]['mem_hex_value'];
+                    mem_dec_value = reg_dict['total'][cycle]['mem_dec_value'];
+                    if (mem_address){
+                        mem_area = document.getElementById("mem_area");
+                        if (document.getElementById(mem_address)){
+                            line = document.getElementById(mem_address);
+                            line.setAttribute("name", cycle+"_mem");;
+                            
+                            value = line.lastElementChild;
+                            value.innerText = mem_hex_value+"( "+mem_dec_value+" )";
+                        }
+                        else{
+                            <!--new_line = document.createElement("div");
+                            <!--new_line.innerText = mem_address + ": " + mem_value;
+                            <!--new_line.setAttribute("id", mem_address);
+                            <!--new_line.setAttribute("class", "border border-dark border-2 my-1 py-1");
+                            <!--new_line.setAttribute("name", cycle+"_mem");
+                            <!--mem_area.appendChild(new_line);-->
+                            
+                            new_line = document.createElement("div");
+                            new_line.setAttribute("id", mem_address);
+                            new_line.setAttribute("class", "d-flex align-items-center bg-light rounded-3 mt-2");
+                            new_line.setAttribute("style", "border: 3px solid #000000;");
+                            new_line.setAttribute("name", cycle+"_mem");
+                            mem_area.appendChild(new_line);
+                            
+                            new_address = document.createElement("div");
+                            new_address.setAttribute("name", "address_"+mem_address);
+                            new_address.setAttribute("class", "d-flex text-white text-center result-context px-1 py-1");
+                            new_address.setAttribute("style", "background-color: #000000; width:100px;");
+                            new_address.innerText = mem_address;
+                            new_line.appendChild(new_address);
+                            
+                            new_value = document.createElement("div");
+                            new_value.setAttribute("name", "value_"+mem_hex_value);
+                            new_value.setAttribute("class", "flex-grow-1 text-right text-center result-context");
+                            new_value.innerText = mem_hex_value+"( "+mem_dec_value+" )";
+                            new_line.appendChild(new_value);
+                            
+                            
+                        }
+                    }
+                }
+                
+                function set_all_mem(){
+                    delete_mem();
+                    for (cycle = 0; cycle<reg_dict['total'].length-1; cycle++){
+                        set_mem();
+                    }
+                }
+                
+                function undo_mem(){
+                    delete_mem();
+                    for (cycle = 0; cycle<prev_cycle-1; cycle++){
+                        set_mem();
+                    }
+                }
+                
+                function resize(){
+                    term.fit()
+                    socket.emit("resize", {"cols": term.cols, "rows": term.rows})
+                }
+
+                window.onresize = resize
+                window.onload = resize
+
+              </script>
+        </div>
+    </div>
+    <div class="col-vw">
+        <div class="sub-title">Registers</div>
+        <!-- 레지스터 표시 -->
+        <div class="big-block border border-3 border-dark mt-2">
+            <div class="row no-wrap d-flex justify-content-center mt-3">
+                {% include "register.html" with register_id="PC" color="#683240" register_name="PC" %}
+                {% include "register.html" with register_id="IR" color="#683240" register_name="IR" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="r0" color="#222222" register_name="r0" %}
+                {% include "register.html" with register_id="at" color="#222222" register_name="at" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="v0" color="#222222" register_name="v0" %}
+                {% include "register.html" with register_id="v1" color="#222222" register_name="v1" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="a0" color="#251327" register_name="a0" %}
+                {% include "register.html" with register_id="a1" color="#251327" register_name="a1" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="a2" color="#251327" register_name="a2" %}
+                {% include "register.html" with register_id="a3" color="#251327" register_name="a3" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="t0" color="#001845" register_name="t0" %}
+                {% include "register.html" with register_id="t1" color="#001845" register_name="t1" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="t2" color="#001845" register_name="t2" %}
+                {% include "register.html" with register_id="t3" color="#001845" register_name="t3" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="t4" color="#001845" register_name="t4" %}
+                {% include "register.html" with register_id="t5" color="#001845" register_name="t5" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="t6" color="#001845" register_name="t6" %}
+                {% include "register.html" with register_id="t7" color="#001845" register_name="t7" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="s0" color="#1d3557" register_name="s0" %}
+                {% include "register.html" with register_id="s1" color="#1d3557" register_name="s1" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="s2" color="#1d3557" register_name="s2" %}
+                {% include "register.html" with register_id="s3" color="#1d3557" register_name="s3" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="s4" color="#1d3557" register_name="s4" %}
+                {% include "register.html" with register_id="s5" color="#1d3557" register_name="s5" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="s6" color="#1d3557" register_name="s6" %}
+                {% include "register.html" with register_id="s7" color="#1d3557" register_name="s7" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="t8" color="#444554" register_name="t8" %}
+                {% include "register.html" with register_id="t9" color="#444554" register_name="t9" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="k0" color="#444554" register_name="k0" %}
+                {% include "register.html" with register_id="k1" color="#444554" register_name="k1" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="gp" color="#001219" register_name="gp" %}
+                {% include "register.html" with register_id="sp" color="#001219" register_name="sp" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="fp" color="#001219" register_name="fp" %}
+                {% include "register.html" with register_id="ra" color="#001219" register_name="ra" %}
+            </div>
+            <div class="row no-wrap d-flex justify-content-center mt-2">
+                {% include "register.html" with register_id="HI" color="#001219" register_name="HI" %}
+                {% include "register.html" with register_id="LO" color="#001219" register_name="LO" %}
+            </div>
+        </div>
+    </div>
+    <div class="col-vw">
+        <div class="sub-title">Memory</div>
+        <div class="d-flex align-items-center big-block border border-3 border-dark mt-2">
+            <div id="mem_area" class="form-control border border-light rounded-3 border-white bg-white mx-0 py-0" style="overflow:scroll; width: 100%; height: 98.5%;">
+                <!-- 메모리 표시 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block script %}
+<script src="{% static 'codestyle.js' %}"></script>
+{% endblock %}
